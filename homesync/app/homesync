@@ -1,0 +1,14 @@
+#!/bin/bash
+#if [ ${1:0:1} != '#' ] && [ ${1:-1:1} != '~' ]; then
+#    notify-send "homesync" "$1 $2"
+#fi
+
+inotifywait -mqe move,create,delete ~ \
+ | while read info
+         do
+             arr=(${info})
+             file=${arr[2]}
+             if [ ${file:0:1} != '#' ] && [ ${file:(${#file}-1)} != '~' ]; then
+                 notify-send "homesync" "${info}"
+             fi
+	 done

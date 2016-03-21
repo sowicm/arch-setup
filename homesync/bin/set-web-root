@@ -1,0 +1,10 @@
+#!/bin/bash
+if [ $# -lt 1 ]
+then
+  d=`pwd`
+  sudo rm /srv/http
+  sudo ln -s $d /srv/http
+else
+  sudo rm /srv/http
+  sudo ln -s $1 /srv/http
+fi

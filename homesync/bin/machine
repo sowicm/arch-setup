@@ -1,0 +1,3 @@
+#!/bin/bash
+f=`find ~/Dropbox/_machines -name $1`
+emacsclient -c -a "" $f

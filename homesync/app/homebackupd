@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# /home/sowicm/myenc.sh\
+# /home/sowicm/extpass\
+
+files="\
+ /home/sowicm/.bashrc\
+ /home/sowicm/.bash_profile\
+ /home/sowicm/.bash_logout\
+ /home/sowicm/.bash_history\
+"
+inotifywait -mqe modify,attrib,close_write ${files} \
+ | while read file none1 none2
+         do
+             cp --preserve=all "${file}" /home/sowicm/s/_linux/homebackup/
+         done
+
+# | while read info
+#         do
+#             arr=(${info})
+#             file=${arr[0]}
+#	     cp --preserve=all "${file}" /home/sowicm/s/_linux/homebackup.d/
+#	 done
+
+## dropped
+
+#sudo zip -FS /home/sowicm/homebackup /home/sowicm/* /home/sowicm/.* -P XXfeVLKsadfJLcxKFXV234
+
+#sudo mv /home/sowicm/homebackup.zip /home/sowicm/Dropbox/_linux/
+
+#mkdir -m 700 /tmp/sowicm-homebackup/
+#zip -FS /tmp/sowicm-homebackup/homebackup /home/sowicm/myenc.sh /home/sowicm/extpass /home/sowicm/.bashrc /home/sowicm/.bash_profile /home/sowicm/.bash_logout /home/sowicm/.bash_history -P tdhwhszjlb
+#mv /tmp/sowicm-homebackup/homebackup.zip /home/sowicm/s/_linux/

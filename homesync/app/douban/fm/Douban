@@ -1,0 +1,152 @@
+#!/usr/bin/env python
+# -*- coding=utf-8 -*-
+# authors:
+#   sowicm@gmail.com
+#   oooo4dzd@gmail.com (great thanks to kuwo music)
+#
+
+import os
+import gtk
+import pynotify
+import webkit
+import gobject
+import sys
+import webbrowser
+import json
+import subprocess
+import httplib
+
+URL = "http://douban.fm/radio"
+ICON = os.path.join(os.path.dirname(__file__), 'douban.png')# change it to ur own favoured ico
+icon=os.path.join(os.path.dirname(__file__), 'note_2.png')
+VERSION = "by Sowicm"
+NAME = "豆瓣·FM"
+
+class DoubanWindow(gtk.Window):	
+
+	def __init__(self):	
+		gtk.Window.__init__(self)
+		self.set_default_size(445, 200)		
+		self.page = webkit.WebView()
+		self.add(self.page)
+		self.show_all()
+		self.page.open(URL)
+		self.connect('delete_event', self.minimize)
+		self.connect('check-resize', self.check_resize)
+                #self.page.connect('resource-load-finished', self.v_resource_load_finished)
+                self.page.connect('resource-response-received', self.v_resource_received)
+                #self.page.connect('mime-type-policy-decision-requested', self.v_mime_type_policy_decision_requested)
+                #self.page.connect('download-requested', self.v_download_requested)
+                #self.page.connect('resource-request-starting', self.v_resource_request_starting)
+
+        def v_resource_request_starting(self, webview, frame, resource, request, response):
+                if (resource.get_uri().startswith('http://douban.fm/j/mine/playlist?')):
+                        httpConnection = httplib.HTTPConnection('douban.fm')
+                        httpConnection.request('GET', resource.get_uri())
+                        jsondata = httpConnection.getresponse().read()
+                        jsonfile = open('/var/tmp/douban-fm-json.json', 'w')
+                        jsonfile.write(jsondata)
+                        jsonfile.close()
+                        playlist = json.loads(jsondata)['song']
+                        print 'picture:' + playlist[0]['picture']
+                        os.system('rm /var/tmp/douban-fm-picture.jpg')
+                        os.system('wget -c "' + playlist[0]['picture'] + '" --output-document=/var/tmp/douban-fm-picture.jpg')
+                        subprocess.call([
+                                 'notify-send',
+                                 '-i',
+                                 '/var/tmp/douban-fm-picture.jpg',
+                                 playlist[0]['title'],
+                                 playlist[0]['artist'] + '\n' + playlist[0]['albumtitle']
+                        ])
+                        print request.get_uri()
+                        request.set_uri('file:///var/tmp/douban-fm-json.json')
+
+        def v_download_requested(self, webview, object):
+                return
+
+        def v_mime_type_policy_decision_requested(self, webview, frame, request, mime, decision):
+                print "mime:"
+                print request.get_uri()
+                print mime
+
+
+        def v_resource_load_finished(self, webview, frame, resource):
+                print 'load-finished:' + resource.get_uri()
+                if (resource.get_uri().startswith('http://douban.fm/j/mine/playlist?')):
+                    print 'res:' + resource.get_data()
+
+        def v_resource_starting(self, webview, frame, resource, request, response):
+                if (resource.get_uri().startswith('http://douban.fm/j/mine/playlist?')):
+                        print resource.get_mime()
+
+        def v_resource_received(self, webview, frame, resource, response):
+                if (resource.get_uri().startswith('http://douban.fm/j/mine/playlist?')):
+                        print "response:" + response.get_uri()
+                        print resource.get_data()
+                        # httpConnection = httplib.HTTPConnection('douban.fm')
+                        # httpConnection.request('GET', response.get_uri())
+                        
+                        # playlist = json.loads(httpConnection.getresponse().read())['song']
+                        # print 'picture:' + playlist[0]['picture']
+                        # os.system('rm /var/tmp/douban-fm-picture.jpg')
+                        # os.system('wget -c "' + playlist[0]['picture'] + '" --output-document=/var/tmp/douban-fm-picture.jpg')
+                        # subprocess.call([
+                        #          'notify-send',
+                        #          '-i',
+                        #          '/var/tmp/douban-fm-picture.jpg',
+                        #          playlist[0]['title'],
+                        #          playlist[0]['artist'] + '\n' + playlist[0]['albumtitle']
+                        # ])
+                    
+	def minimize(self, widget, event, data=None):
+		self.hide()
+		return True
+	def check_resize(self, window):
+		self.set_size_request(420, 186)
+
+class Tray():
+	
+	def __init__(self, window):
+		self.window = window	
+		self.window.set_title(NAME)		
+		self.tray = gtk.StatusIcon()
+		self.tray.set_from_file(ICON)
+		self.window.set_icon_from_file(icon)
+		self.tray.set_tooltip(NAME + '\n ' + VERSION)
+		self.tray.connect('activate', self.clickTray)
+		self.tray.connect('popup-menu', self.popUp)
+		
+	def clickTray(self, widget):
+		if self.window.get_property('is-active'):
+			self.window.hide()
+		else:
+			self.window.present()
+
+	def popUp(self, statusicon, button, activate_time):
+		pop_menu = gtk.Menu()
+		
+		item1 = gtk.ImageMenuItem(gtk.STOCK_QUIT)
+		item1.connect("activate", self.quit)
+		pop_menu.append(item1)
+		
+		pop_menu.show_all()
+		pop_menu.popup(None, None, None, 0, gtk.get_current_event_time())
+
+	def quit(self,widget):
+		gtk.main_quit()
+		
+	
+		
+	
+
+
+class music():
+	
+	def __init__(self):
+		self.window = DoubanWindow()
+                self.window.hide()
+		self.tray = Tray(self.window)
+
+if __name__ == '__main__':
+	music()
+	gtk.main()

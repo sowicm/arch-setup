@@ -1,0 +1,12 @@
+#!/bin/bash
+
+killall httpd
+killall mysqld
+
+sudo chown -R sowicm:sowicm /run/httpd
+sudo chown -R sowicm:sowicm /var/log/httpd
+httpd -T -d /webdev/etc/httpd
+
+sudo chown -R sowicm:sowicm /var/lib/mysql
+sudo chown -R sowicm:sowicm /run/mysqld
+mysqld &

@@ -1,0 +1,53 @@
+#!/bin/python
+
+###!/bin/bash
+##ARGS=1
+##E_BADARGS=65
+##
+##if [ $# -ne "$ARGS" ]
+##then
+##    echo "Usage:`basename $0` word"
+##    exit $E_BADARGS
+##fi
+##
+##w3m -no-cookie -dump 'http://dict.baidu.com/s?wd='$1'&f=3'  \
+##| sed '/以下结果来自互联网网络释义/,$d'| sed '1,15d' | tac \
+##| sed '1,2d' | tac |sed -r '/^[0-9]+\./N;s/\n//' > /tmp/rxdict.tmp
+##
+##echo
+##echo -e "--------------------\033[1;40;33m $1 \033[0m--------------------"
+##cat /tmp/rxdict.tmp
+
+import sys
+import os
+from bs4 import BeautifulSoup
+import urllib.request
+#from stripogram import html2text
+#import html2text
+if (len(sys.argv) < 2):
+    word = input("Input the word:")
+else:
+    word = sys.argv[1]
+path = '/home/sowicm/dict/' + word + '.html'
+if (not os.path.isfile(path)):
+    urlitem = urllib.request.urlopen("http://dict.cn/" + word)
+    html = urlitem.read()
+    urlitem.close()
+    soup = BeautifulSoup(html)
+    #print (soup.prettify())
+    #print (soup.get_text())
+    #print (soup.find('div', class_='main').contents)
+    #html2text(soup.find('div', class_='main').contents, ignore_tags=('img',), indent_width=4, page_width=80)
+    #h = html2text.HTML2Text()
+    #h.ignore_links = True
+#print (h.handle(soup.find('div', class_='main')))
+    f = open(path, 'w')
+    f.write(soup.find('div', class_='main').__str__())
+    f.close()
+
+soup = BeautifulSoup(open(path))
+#frintaudio, secondaudio = soup.findAll('i')
+#print (secondaudio[audio])
+if (len(soup.findAll('i')) > 1):
+    os.system('mplayer http://audio.dict.cn/output.php?id=' + soup.findAll('i')[1]['audio'])
+os.system('w3m ' + path)
